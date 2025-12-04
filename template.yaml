@@ -1,0 +1,71 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: InCountry JWT Signing Lambda Function with KMS
+
+Parameters:
+  KmsKeyId:
+    Type: String
+    Description: KMS Key ID or ARN for signing JWT tokens
+    Default: ''
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 256
+    Runtime: nodejs18.x
+    Environment:
+      Variables:
+        AWS_REGION: !Ref AWS::Region
+
+Resources:
+  JwtSigningFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: incountry-jwt-signing
+      CodeUri: ./
+      Handler: index.handler
+      Environment:
+        Variables:
+          KMS_KEY_ID: !Ref KmsKeyId
+      Policies:
+        - Statement:
+            - Sid: KmsSignAndGetPublicKey
+              Effect: Allow
+              Action:
+                - kms:Sign
+                - kms:GetPublicKey
+              Resource: !Sub 'arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/*'
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+            Cors:
+              AllowMethods: "'GET,POST,OPTIONS'"
+              AllowHeaders: "'Content-Type,Authorization'"
+              AllowOrigin: "'*'"
+        Root:
+          Type: Api
+          Properties:
+            Path: /
+            Method: ANY
+            Cors:
+              AllowMethods: "'GET,POST,OPTIONS'"
+              AllowHeaders: "'Content-Type,Authorization'"
+              AllowOrigin: "'*'"
+
+Outputs:
+  JwtSigningApi:
+    Description: API Gateway endpoint URL
+    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/'
+  JwtSigningFunctionArn:
+    Description: Lambda Function ARN
+    Value: !GetAtt JwtSigningFunction.Arn
+  JwksEndpoint:
+    Description: JWKS endpoint URL
+    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/.well-known/jwks.json'
+  SigningEndpoint:
+    Description: JWT Signing endpoint URL
+    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/sign'
+

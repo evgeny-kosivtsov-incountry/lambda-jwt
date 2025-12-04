@@ -1,0 +1,25 @@
+{
+  "name": "incountry-jwt-signing-lambda",
+  "version": "1.0.0",
+  "description": "AWS Lambda function for signing JWT tokens with AWS KMS and providing JWKS endpoint",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "jwt",
+    "kms",
+    "aws",
+    "lambda",
+    "jwks"
+  ],
+  "author": "InCountry",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-kms": "^3.490.0",
+    "jsonwebtoken": "^9.0.2",
+    "jwks-rsa": "^3.1.0",
+    "ecdsa-sig-formatter": "^1.0.11"
+  }
+}
+

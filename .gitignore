@@ -1,0 +1,18 @@
+node_modules/
+*.zip
+.env
+.DS_Store
+*.log
+.aws-sam/
+.serverless/
+
+# Russian documentation files
+DEPLOY_CONSOLE.md
+FIND_KMS_KEY.md
+KMS_KEY_SETUP.md
+DEPLOY.md
+TESTING.md
+
+# Test files
+test-event*.json
+
