@@ -72,18 +72,8 @@ async function generateJWKS() {
     // Extract key information in JWK format
     const jwk = publicKey.export({ format: 'jwk' });
     
-    // Generate key ID from KMS key ID (use last part of ARN or key ID itself)
-    let keyId = KMS_KEY_ID;
-    if (KMS_KEY_ID.includes('/')) {
-      keyId = KMS_KEY_ID.split('/').pop();
-    } else if (KMS_KEY_ID.includes(':')) {
-      // Handle ARN format: arn:aws:kms:region:account:key/key-id
-      const parts = KMS_KEY_ID.split(':');
-      if (parts.length > 0) {
-        const lastPart = parts[parts.length - 1];
-        keyId = lastPart.includes('/') ? lastPart.split('/').pop() : lastPart;
-      }
-    }
+    // Get key ID (use same logic as in signJWT for consistency)
+    const keyId = getKeyId();
     
     // Determine algorithm based on key details
     let algorithm = 'RS256';
@@ -149,6 +139,25 @@ async function getKeyAlgorithm() {
 }
 
 /**
+ * Get key ID from KMS key ID
+ * Extracts key ID from ARN or uses key ID directly
+ */
+function getKeyId() {
+  let keyId = KMS_KEY_ID;
+  if (KMS_KEY_ID.includes('/')) {
+    keyId = KMS_KEY_ID.split('/').pop();
+  } else if (KMS_KEY_ID.includes(':')) {
+    // Handle ARN format: arn:aws:kms:region:account:key/key-id
+    const parts = KMS_KEY_ID.split(':');
+    if (parts.length > 0) {
+      const lastPart = parts[parts.length - 1];
+      keyId = lastPart.includes('/') ? lastPart.split('/').pop() : lastPart;
+    }
+  }
+  return keyId;
+}
+
+/**
  * Convert ECDSA DER signature to JWT format (r, s)
  * 
  * AWS KMS for ECDSA keys returns signature in DER format (ASN.1 structure).
@@ -183,10 +192,14 @@ async function signJWT(payload) {
     // Get algorithm from key
     const algorithm = await getKeyAlgorithm();
     
+    // Get key ID for kid header
+    const keyId = getKeyId();
+    
     // Create JWT header
     const header = {
       alg: algorithm,
-      typ: 'JWT'
+      typ: 'JWT',
+      kid: keyId
     };
 
     // Encode header and payload
